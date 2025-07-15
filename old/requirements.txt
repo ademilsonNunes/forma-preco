@@ -1,0 +1,10 @@
+streamlit
+pandas
+pulp
+openpyxl
+fuzzywuzzy
+XlsxWriter
+python-dotenv
+pyodbc
+requests
+urllib.parse
