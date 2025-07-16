@@ -48,6 +48,12 @@ class SimuladorSobel:
         # Serviço de banco de dados
         connection_string = DatabaseService.get_default_connection_string()
         self.db_service = DatabaseService(connection_string)
+
+        # Carregar dados logísticos de capacidade de produtos
+        self.df_logistica = self.db_service.carregar_produtos_truck_carreta()
+        if self.df_logistica.empty:
+            self.df_logistica = pd.DataFrame()
+            st.info("ℹ️ Dados logísticos não encontrados ou vazios.")
         
         # Serviço de geolocalização
         api_key = os.getenv("GOOGLE_MAPS_API_KEY")
@@ -428,6 +434,35 @@ class SimuladorSobel:
         if resultado_frete_completo:
             # Calcular volume total
             volume_total = df_final["Quantidade"].sum()
+            if hasattr(self, "df_logistica") and not self.df_logistica.empty:
+                try:
+                    codigo_col_final = next((c for c in ["CODIGO", "Codigo", "Código", "Produto", "Descrição", "Descrição"] if c in df_final.columns), None)
+                    codigo_col_log = next((c for c in ["CODIGO", "Codigo", "produto", "PRODUTO", "DESCRICAO", "Descrição"] if c in self.df_logistica.columns), None)
+                    peso_col = next((c for c in ["PESO", "PESO_KG", "PESO_CAIXA"] if c in self.df_logistica.columns), None)
+                    volume_col = next((c for c in ["VOLUME", "VOLUME_M3", "CUBAGEM"] if c in self.df_logistica.columns), None)
+
+                    if codigo_col_final and codigo_col_log and (peso_col or volume_col):
+                        df_merge = df_final[[codigo_col_final, "Quantidade"]].merge(
+                            self.df_logistica,
+                            left_on=codigo_col_final,
+                            right_on=codigo_col_log,
+                            how="left"
+                        )
+                        df_merge["_peso"] = pd.to_numeric(df_merge[peso_col], errors="coerce").fillna(0) * df_merge["Quantidade"] if peso_col else 0
+                        df_merge["_vol"] = pd.to_numeric(df_merge[volume_col], errors="coerce").fillna(0) * df_merge["Quantidade"] if volume_col else 0
+                        total_peso = df_merge["_peso"].sum()
+                        total_m3 = df_merge["_vol"].sum()
+                        cap_truck_peso = 12000
+                        cap_carreta_peso = 28000
+                        cap_truck_m3 = 36
+                        cap_carreta_m3 = 76
+                        eq_truck_peso = (total_peso / cap_truck_peso) * resultado_frete_completo["capacidades"]["truck"]
+                        eq_carreta_peso = (total_peso / cap_carreta_peso) * resultado_frete_completo["capacidades"]["carreta"]
+                        eq_truck_vol = (total_m3 / cap_truck_m3) * resultado_frete_completo["capacidades"]["truck"]
+                        eq_carreta_vol = (total_m3 / cap_carreta_m3) * resultado_frete_completo["capacidades"]["carreta"]
+                        volume_total = max(volume_total, eq_truck_peso, eq_carreta_peso, eq_truck_vol, eq_carreta_vol)
+                except Exception as e:
+                    st.info(f"Dados logísticos ignorados: {e}")
             
             # Reavalia a otimização com o volume real
             nova_otimizacao = calcular_frete_otimizado(resultado_frete_completo, volume_total)

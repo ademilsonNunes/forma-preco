@@ -138,6 +138,17 @@ class DatabaseService:
         except Exception as e:
             st_error(f"Erro na conexão com banco: {e}")
             return False
+
+    @st_cache_data(ttl=600)
+    def carregar_produtos_truck_carreta(_self) -> pd.DataFrame:
+        """Carrega tabela de logística de produtos"""
+        try:
+            with pyodbc.connect(_self.connection_string) as conexao:
+                query = "SELECT * FROM BISOBEL.dbo.PRODUTOS_TRUCK_CARRETA"
+                return pd.read_sql(query, conexao)
+        except Exception as e:
+            st_error(f"Erro ao carregar dados logísticos: {e}")
+            return pd.DataFrame()
     
     @staticmethod
     def get_default_connection_string() -> str:
