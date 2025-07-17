@@ -321,8 +321,12 @@ class SimuladorSobel:
         """Processa a edição de dados e cálculo de resultados"""
         # Determinar DataFrame para edição
         df_atual = self.state.get_simulacao('df_atual')
+        df_edicao_temp = self.state.get_simulacao('df_edicao_temp')
+
         if df_atual is not None:
             df_para_edicao = df_atual.copy()
+        elif df_edicao_temp is not None:
+            df_para_edicao = df_edicao_temp.copy()
         else:
             df_para_edicao = df_base.copy()
         
