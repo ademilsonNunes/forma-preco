@@ -155,8 +155,8 @@ class DatabaseService:
         """Retorna string de conexão padrão"""
         return (
             "DRIVER={ODBC Driver 17 for SQL Server};"
-            "SERVER=192.168.0.16;"
-            "DATABASE=Protheus_Producao;"
-            "UID=sa;"
-            "PWD=Totvs@452525!"
+            "SERVER=;"
+            "DATABASE=;"
+            "UID=;"
+            "PWD="
         )
