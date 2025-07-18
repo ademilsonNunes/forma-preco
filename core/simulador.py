@@ -14,6 +14,7 @@ from .state_manager import StateManager
 from services.database_service import DatabaseService
 from services.geolocation_service import GeolocationService
 from services.calculation_service import CalculadoraResultados, CalculadoraPontoEquilibrio
+from services.logistics_service import LogisticsService
 from config.tributaria import ConfiguracaoTributaria
 from ui.layout import SimuladorLayout
 from utils.frete_utils import (
@@ -54,6 +55,7 @@ class SimuladorSobel:
         if self.df_logistica.empty:
             self.df_logistica = pd.DataFrame()
             st.info("ℹ️ Dados logísticos não encontrados ou vazios.")
+        self.logistics_service = None if self.df_logistica.empty else LogisticsService(self.df_logistica)
         
         # Serviço de geolocalização
         api_key = os.getenv("GOOGLE_MAPS_API_KEY")
@@ -514,7 +516,12 @@ class SimuladorSobel:
         
         # Exibir resumo executivo
         self.layout.exibir_resumo_executivo(df_display)
-        
+
+        # Resumo logístico se dados disponíveis
+        if self.logistics_service:
+            info_log = self.logistics_service.calcular_logistica(df_final)
+            self.layout.exibir_resumo_logistico(info_log)
+
         # Exibir detalhamento do cálculo
         self.layout.exibir_detalhamento_calculo(df_final, resultados)
         
