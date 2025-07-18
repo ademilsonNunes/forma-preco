@@ -145,7 +145,15 @@ class DatabaseService:
         try:
             with pyodbc.connect(_self.connection_string) as conexao:
                 query = "SELECT * FROM BISOBEL.dbo.PRODUTOS_TRUCK_CARRETA"
-                return pd.read_sql(query, conexao)
+                df = pd.read_sql(query, conexao)
+                df.columns = df.columns.str.strip()
+
+                # Normalizar campos importantes
+                for col in ["CXS_PLT", "PESO", "PESO_KG", "VOLUME", "VOLUME_M3"]:
+                    if col in df.columns:
+                        df[col] = pd.to_numeric(df[col], errors="coerce")
+
+                return df
         except Exception as e:
             st_error(f"Erro ao carregar dados logísticos: {e}")
             return pd.DataFrame()

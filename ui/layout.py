@@ -564,6 +564,23 @@ class SimuladorLayout:
     def exibir_resumo_executivo(self, df_display: pd.DataFrame):
         """Exibe resumo executivo"""
         ResumoExecutivoComponent.exibir_resumo(df_display)
+
+    def exibir_resumo_logistico(self, info: dict):
+        """Exibe resumo de peso e veículos"""
+        if not info:
+            return
+        st.markdown("### 🚚 Resumo Logístico")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Peso Total", f"{info['peso_total']:.1f} kg")
+        with col2:
+            st.metric("Trucks", info['truck_qtd'])
+        with col3:
+            st.metric("Carretas", info['carreta_qtd'])
+        if info.get('sugestoes'):
+            st.markdown("#### 📦 Sugestões para Completar Pallets")
+            for s in info['sugestoes']:
+                st.write(f"{s['produto']}: +{s['quantidade']} un.")
     
     def exibir_detalhamento_calculo(self, df_final: pd.DataFrame, resultados: pd.DataFrame):
         """Exibe detalhamento do cálculo do primeiro produto"""
